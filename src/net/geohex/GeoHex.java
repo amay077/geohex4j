@@ -11,7 +11,10 @@ import java.util.regex.Pattern;
 
 public class GeoHex {
 	public  static final String VERSION = "3.00";
-	
+
+	public static final int LV_MIN = 0;  // GeoHex min level
+	public static final int LV_MAX = 15; // GeoHex max level
+
 	// *** Share with all instances ***
 	public static final String h_key = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 	public static final double h_base = 20037508.34;
@@ -19,8 +22,8 @@ public class GeoHex {
 	public static final double h_k = Math.tan(h_deg);
 
 	// *** Share with all instances ***
-	// private static
-	private static double calcHexSize(int level) {
+	/** get GeoHex size of the given level.(unit:metre) */
+	public static double calcHexSize(int level) {
 		return h_base/Math.pow(3.0, level+1);
 	}
 
@@ -173,6 +176,18 @@ public class GeoHex {
 	}
 	
 	public static final Zone getZoneByCode(String code) {
+		return getZoneByCode(code, 0, 0);
+	}
+	
+	/***
+	 * Get Zone from code and offsets.
+	 * 
+	 * @param code base of GeoHex code.
+	 * @param offsetX offset of x-axis(south west to north east). 
+	 * @param offsetY offset of y-axis(south east to north west). 
+	 * @return Returns the calculated Zone by the given code and offsets.
+	 */
+	public static final Zone getZoneByCode(String code, int offsetX, int offsetY) {
 		int level = code.length();
 		double h_size =  calcHexSize(level);
 		double unit_x = 6 * h_size;
@@ -224,6 +239,9 @@ public class GeoHex {
 		    }
 		}
 
+		h_x += offsetX;
+		h_y += offsetY;
+		
 		double h_lat_y = (h_k * h_x * unit_x + h_y * unit_y) / 2;
 		double h_lon_x = (h_lat_y - h_y * unit_y) / h_k;
 
@@ -268,10 +286,16 @@ public class GeoHex {
 	public static final String encode(double lat, double lon, int level) {
 		return getZoneByLocation(lat, lon, level).code;
 	}
+	
 	public static final Zone decode(String code) {
 		return getZoneByCode(code);
 	}
 	
+	/** Wrapper of getZoneByCode(code、offsetX, offsetY) */
+	public static final Zone decode(String code, int offsetX, int offsetY) {
+		return getZoneByCode(code, offsetX, offsetY);
+	}
+
 	private static final Pattern INC15 = Pattern.compile("[15]");
 	private static final Pattern EXC125 = Pattern.compile("[^125]");
 	private static final boolean regMatch(CharSequence cs, Pattern pat) {
